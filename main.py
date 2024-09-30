@@ -134,12 +134,12 @@ frame = ttk.Frame(root)
 frame.pack(fill=tk.BOTH, expand=True, padx=10)
 
 ttk.Label(frame, text="Volume").pack(side=tk.LEFT, padx=(0, 5), pady=(0, 5))
+label_volume = ttk.Label(frame, text=100)
+label_volume.pack(side=tk.RIGHT, padx=(10, 0))
 volume = tk.IntVar()
 scale_volume = ttk.Scale(frame, from_=0, to=100, orient="horizontal", variable=volume, command=lambda value: label_volume.config(text=int(float(value))))
 scale_volume.pack(side=tk.LEFT, fill=tk.X, expand=True)
 scale_volume.set(100)
-label_volume = ttk.Label(frame, text=100)
-label_volume.pack(side=tk.RIGHT, padx=(10, 0))
 
 ttk.Separator(root, orient="horizontal").pack(fill="x", pady=10)
 
