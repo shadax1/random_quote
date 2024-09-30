@@ -23,6 +23,7 @@ def quotes():
             label_info.config(text="quotes are now ready", background="#00ff2d", anchor="center")
 
             for message in chat: #chat loop
+                open(quotes_file, mode="wt", encoding="utf-8").close() #empty quote text file
                 if selected_radio.get() == 0: #probability
                     rand = random.randint(1, 100)
                     bool_command_present = False #to invalidate the upcoming command-boolean check
