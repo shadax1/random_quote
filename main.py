@@ -11,7 +11,6 @@ quotes_file = f"{script_path}{os.path.sep}quote.txt"
 
 thread = None
 chat_loop = False
-volume = 100
 
 def quotes():
     if twitch_channel.get() != "" and ((selected_radio.get() == 0 and 1 <= percentage.get() <= 100) or (selected_radio.get() == 1 and command.get() != "")):
@@ -39,9 +38,9 @@ def quotes():
                         fp_quotes.write(f"{username} rolled for {random_file}")
                     #play random quote
                     if not check_chaos_state.get():
-                        os.system(f'mpv --volume={volume} "{quotes_folder}{random_file}"') #normal
+                        os.system(f'mpv --volume={volume.get()} "{quotes_folder}{random_file}"') #normal
                     else:
-                        subprocess.Popen(f'mpv --volume={volume} "{quotes_folder}{random_file}"', shell=True) #chaos
+                        subprocess.Popen(f'mpv --volume={volume.get()} "{quotes_folder}{random_file}"', shell=True) #chaos
                 if not chat_loop: #essentially checks if the Stop button has been pressed (switches chat_loop to False)
                     break #exit the loop
             sleep(0.1)
@@ -51,10 +50,6 @@ def quotes():
     else:
         button_start.config(state=tk.NORMAL)
         label_info.config(text="missing/invalid info", background="#ff390f", anchor="center")
-
-def update_volume(value):
-    global volume
-    volume = value
 
 def disable_widgets():
     text_twitch_channel.config(state=tk.DISABLED)
@@ -106,12 +101,6 @@ def on_closing():
 
 root = tk.Tk()
 root.title("Random quotes")
-#window size
-if os.name == 'nt':
-    root.geometry("1000x370+75+300") #widthxheight±x±y
-else:
-    root.geometry("1000x410+75+300") #widthxheight±x±y
-
 root.resizable(True, False) #width,height
 
 ttk.Label(root, text="Twitch channel:").pack(anchor=tk.W, padx=10, pady=1)
@@ -139,11 +128,18 @@ selected_radio.set(0)
 
 check_chaos_state = tk.BooleanVar()
 check_chaos = ttk.Checkbutton(root, text="Chaos mode (quotes can overlap)", variable=check_chaos_state, onvalue=True, offvalue=False)
-check_chaos.pack(anchor=tk.W, padx=10, pady=1, fill=tk.X)
+check_chaos.pack(anchor=tk.W, padx=10, pady=2, fill=tk.X)
 
-volume_slider = tk.Scale(root, label='Volume', from_=0, to=100, orient=tk.HORIZONTAL, tickinterval=10, showvalue=False, command=update_volume)
-volume_slider.pack(anchor=tk.W, padx=10, pady=0, fill=tk.X)
-volume_slider.set(100)
+frame = ttk.Frame(root)
+frame.pack(fill=tk.BOTH, expand=True, padx=10)
+
+ttk.Label(frame, text="Volume").pack(side=tk.LEFT, padx=(0, 5), pady=(0, 5))
+volume = tk.IntVar()
+scale_volume = ttk.Scale(frame, from_=0, to=100, orient="horizontal", variable=volume, command=lambda value: label_volume.config(text=int(float(value))))
+scale_volume.pack(side=tk.LEFT, fill=tk.X, expand=True)
+scale_volume.set(100)
+label_volume = ttk.Label(frame, text=100)
+label_volume.pack(side=tk.RIGHT, padx=(10, 0))
 
 ttk.Separator(root, orient="horizontal").pack(fill="x", pady=10)
 
@@ -153,7 +149,7 @@ button_stop = ttk.Button(root, text="Stop", command=lambda: stop_thread(), state
 button_stop.pack(anchor=tk.W, padx=10, pady=1, fill=tk.X)
 
 label_info = ttk.Label(root, font=("Consolas", 20), relief="sunken")
-label_info.pack(anchor=tk.W, fill="x", padx=10, pady=5)
+label_info.pack(anchor=tk.W, fill="x", padx=10, pady=10)
 
 root.protocol("WM_DELETE_WINDOW", on_closing)
 root.mainloop() #ensures the main window remains visible on the screen
