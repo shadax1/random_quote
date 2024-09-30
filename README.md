@@ -33,6 +33,7 @@ mpv can be downloaded [here](https://mpv.io/installation/). I suggest clicking t
 		- command -> put any string you want and an audio file will play whenever someone's message contains that string
 	- Chaos mode is a mode that doesn't wait for the previous audio file to finish, so it leads to a chaotic mess where audio files overlap
 	- adjust the volume by moving the slider
+
 ![window](window.png)
 
 <ins>Note:</ins> The script will automatically update the content of the `quote.txt` file with the info on who triggered an audio file in case you want to capture that in OBS (`Add` > `Text` > `Read from file`). There is also a large rectangle inside the window that contains the same info if you prefer capturing that.
