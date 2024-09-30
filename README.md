@@ -26,9 +26,6 @@ mpv can be downloaded [here](https://mpv.io/installation/). I suggest clicking t
 1. Download this repository and unzip it anywhere you want on your computer
 2. Add your audio files inside the `audio` folder
 3. Run the script by either running the `python main.py` command or, for Windows users, by right-clicking the `main.py` and select `Open with` > `Python`
-
-![window](window.png)
-
 4. A window will show up where you can:
 	- fill in the name of the channel you want to track
 	- select the way you want quotes to be played;
@@ -36,7 +33,9 @@ mpv can be downloaded [here](https://mpv.io/installation/). I suggest clicking t
 		- command -> put any string you want and an audio file will play whenever someone's message contains that string
 	- Chaos mode is a mode that doesn't wait for the previous audio file to finish, so it leads to a chaotic mess where audio files overlap
 	- adjust the volume by moving the slider
-5. The script will automatically update the contents of the `quote.txt` file with the info on who triggered an audio file in case you want to capture that in OBS (`Add` > `Text` > `Read from file`). There is also a large rectangle inside the window that contains the same info if you prefer capturing that.
+![window](window.png)
+
+<ins>Note:</ins> The script will automatically update the content of the `quote.txt` file with the info on who triggered an audio file in case you want to capture that in OBS (`Add` > `Text` > `Read from file`). There is also a large rectangle inside the window that contains the same info if you prefer capturing that.
 
 ## Troubleshooting
 ### tk package missing on Linux
