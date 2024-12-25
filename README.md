@@ -36,7 +36,8 @@ mpv can be downloaded [here](https://mpv.io/installation/). I suggest clicking t
 
 ![window](window.png)
 
-<ins>Note:</ins> The script will automatically update the content of the `quote.txt` file with the info on who triggered an audio file in case you want to capture that in OBS (`Add` > `Text` > `Read from file`). There is also a large rectangle inside the window that contains the same info if you prefer capturing that.
+<ins>Note:</ins> The script will automatically update the content of the `quote.txt` file with the info on who triggered an audio file, their rank on the leaderboard and how many times they triggered audio files, in case you want to capture that in OBS (`Add` > `Text` > `Read from file`). There is also a large rectangle inside the window that contains the same info if you prefer capturing that.
+On top of that, there is a 'leaderboard.txt' file showing the full list of users and how many times they triggered audio files.
 
 ## Troubleshooting
 ### tk package missing on Linux
