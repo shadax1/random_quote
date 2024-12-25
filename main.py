@@ -5,52 +5,111 @@ import tkinter as tk
 from tkinter import ttk
 from chat_downloader import ChatDownloader
 
+#paths for the script and audio files
 script_path = os.path.dirname(os.path.abspath(__file__)) #path to script"s directory
-quotes_folder = f"{script_path}{os.path.sep}audio{os.path.sep}"
-quotes_file = f"{script_path}{os.path.sep}quote.txt"
+audio_folder = f"{script_path}{os.path.sep}audio{os.path.sep}"
+audio_txt_file = f"{script_path}{os.path.sep}quote.txt"
+leaderboard_file = f"{script_path}{os.path.sep}leaderboard.txt"
 
+#globals
 thread = None
 chat_loop = False
+leaderboard = {}
 
-def quotes():
+def init():
+    #start processing quotes if the ui input is valid
     if twitch_channel.get() != "" and ((selected_radio.get() == 0 and 1 <= percentage.get() <= 100) or (selected_radio.get() == 1 and command.get() != "")):
         channel = f"https://www.twitch.tv/{twitch_channel.get()}"
         try:
             chat = ChatDownloader().get_chat(channel)
             global chat_loop
             chat_loop = True
+
             disable_widgets()
-            label_info.config(text="quotes are now ready", background="#00ff2d", anchor="center")
+            load_leaderboard(leaderboard_file)
+            root.after(0, update_label, "quotes are now ready", "#00ff2d")
 
             for message in chat: #chat loop
-                open(quotes_file, mode="wt", encoding="utf-8").close() #empty quote text file
-                if selected_radio.get() == 0: #probability
-                    rand = random.randint(1, 100)
-                    bool_command_present = False #to invalidate the upcoming command-boolean check
-                else: #command
-                    bool_command_present = command.get() in message["message"] #boolean will say whether the command was present in the chat line
-                    rand = 101 #to invalidate the upcoming random-chance check
+                process_message(message)
 
-                if rand <= percentage.get() or bool_command_present:
-                    username = message["author"]["display_name"]
-                    random_file = random.choice(os.listdir(quotes_folder)) #get random quote
-                    label_info.config(text=f"{username} rolled for {random_file}", background="", anchor="center") #display message
-                    with open(quotes_file, mode="wt", encoding="utf-8") as fp_quotes:
-                        fp_quotes.write(f"{username} rolled for {random_file}")
-                    #play random quote
-                    if not check_chaos_state.get():
-                        os.system(f'mpv --volume={volume.get()} "{quotes_folder}{random_file}"') #normal
-                    else:
-                        subprocess.Popen(f'mpv --volume={volume.get()} "{quotes_folder}{random_file}"', shell=True) #chaos
                 if not chat_loop: #essentially checks if the Stop button has been pressed (switches chat_loop to False)
                     break #exit the loop
-            sleep(0.1)
-        except:
+
+        except Exception:
             button_start.config(state=tk.NORMAL)
-            label_info.config(text="invalid URL or site not supported", background="#ff390f", anchor="center")
+            root.after(0, update_label, "invalid URL or site not supported", "#ff390f")
     else:
         button_start.config(state=tk.NORMAL)
-        label_info.config(text="missing/invalid info", background="#ff390f", anchor="center")
+        root.after(0, update_label, "missing/invalid info", "#ff390f")
+
+def process_message(message):
+    if selected_radio.get() == 0: #probability mode
+        rand = random.randint(1, 100)
+        bool_command_present = False #to invalidate the upcoming command-boolean check
+    else: #command mode
+        bool_command_present = command.get() in message["message"] #boolean will say whether the command was present in the chat line
+        rand = 101 #bypass random chance check
+
+    if rand <= percentage.get() or bool_command_present:
+        username = message["author"]["display_name"]
+        random_file = random.choice(os.listdir(audio_folder)) #get a random audio file
+
+        #handle potential search query if command
+        if bool_command_present and " " in message["message"].strip():
+            lst_search_query = message["message"].split(" ")
+            if lst_search_query[-1] != command.get(): #if the command has strings after
+                index = lst_search_query.index(command.get()) #get the index of the command
+                search_query = ' '.join(lst_search_query[index + 1:])  #join strings after command
+                matching_files = [file for file in os.listdir(audio_folder) 
+                                    if search_query.lower() in file.lower()] #find matching files based on query
+                if matching_files: #if the search yields something
+                    random_file = random.choice(matching_files) #get a random audio file from matching files
+
+        #update leaderboards
+        leaderboard[username] = leaderboard.get(username, 0) + 1 #if doesn't exist, returns 0
+        save_leaderboard(leaderboard_file)
+
+        #get user's rank and count
+        sorted_leaderboard = sorted(leaderboard.items(), key=lambda item: item[1], reverse=True)  #sort leaderboard
+        user_rank = next((rank + 1 for rank, (user, count) in enumerate(sorted_leaderboard) if user == username), None)  #find user's rank
+        user_count = leaderboard[username]  #get user's count
+        rank_suffix = get_rank_suffix(user_rank) #get the appropriate suffix for the user's rank
+
+        #display info
+        info = f"{username} ({user_rank}{rank_suffix}/{user_count}) rolled for {random_file}"
+        root.after(0, update_label, info, "")
+
+        with open(audio_txt_file, mode="w", encoding="utf-8") as fp_audio_txt_file:
+            fp_audio_txt_file.write(info)
+
+        #play the audio file
+        play_command = f'mpv --volume={volume.get()} "{audio_folder}{random_file}"'
+        if not check_chaos_state.get():
+            os.system(play_command) #normal
+        else:
+            subprocess.Popen(play_command, shell=True) #chaos
+
+        open(audio_txt_file, mode="w").close() #empty audio text file
+
+def load_leaderboard(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, mode="r", encoding="utf-8") as f:
+            for line in f:
+                username, count = line.strip().split('\t')
+                leaderboard[username] = int(count)
+
+def save_leaderboard(file_path):
+    with open(file_path, mode="w", encoding="utf-8") as f:
+        sorted_leaderboard = sorted(leaderboard.items(), key=lambda item: item[1], reverse=True) #sort the leaderboard by count in descending order
+        for username, count in sorted_leaderboard:
+            f.write(f"{username}\t{count}\n")
+
+def get_rank_suffix(rank):
+    if 10 <= rank % 100 <= 20:  #handle the special case for 11th, 12th, 13th
+        return "th"
+    else:
+        suffixes = {1: "st", 2: "nd", 3: "rd"}
+        return suffixes.get(rank % 10, "th")  #default to "th" for other ranks
 
 def disable_widgets():
     text_twitch_channel.config(state=tk.DISABLED)
@@ -76,17 +135,6 @@ def enable_widgets():
         text_command.config(state=tk.NORMAL)
         text_percentage.config(state=tk.DISABLED)
 
-def start_thread(thread):
-    button_start.config(state=tk.DISABLED)
-    thread = Thread(target=quotes, args=[])
-    thread.start()
-
-def stop_thread():
-    global chat_loop
-    chat_loop = False
-    enable_widgets()
-    label_info.config(text="quotes are now disabled", background="#0f69ff", anchor="center")
-
 def on_radio_change():
     if selected_radio.get() == 0:
         text_percentage.config(state=tk.NORMAL)
@@ -94,6 +142,21 @@ def on_radio_change():
     else:
         text_command.config(state=tk.NORMAL)
         text_percentage.config(state=tk.DISABLED)
+
+def update_label(info, background_color=""):
+    label_info.config(text=info, background=background_color, anchor="center")
+
+def start_thread():
+    global thread
+    button_start.config(state=tk.DISABLED)
+    thread = Thread(target=init)
+    thread.start()
+
+def stop_thread():
+    global chat_loop
+    chat_loop = False
+    enable_widgets()
+    root.after(0, update_label, "quotes are now disabled", "#0f69ff")
 
 def on_closing():
     if chat_loop: #clean up the thread if closing while quotes are still enabled
@@ -144,7 +207,7 @@ scale_volume.set(100)
 
 ttk.Separator(root, orient="horizontal").pack(fill="x", pady=10)
 
-button_start = ttk.Button(root, text="Start", command=lambda: start_thread(thread))
+button_start = ttk.Button(root, text="Start", command=lambda: start_thread())
 button_start.pack(anchor=tk.W, padx=10, pady=1, fill=tk.X)
 button_stop = ttk.Button(root, text="Stop", command=lambda: stop_thread(), state=tk.DISABLED)
 button_stop.pack(anchor=tk.W, padx=10, pady=1, fill=tk.X)
