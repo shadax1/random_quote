@@ -1,5 +1,4 @@
 import os, random, subprocess
-from time import sleep
 from threading import Thread
 import tkinter as tk
 from tkinter import ttk
@@ -66,13 +65,13 @@ def process_message(message):
                     random_file = random.choice(matching_files) #get a random audio file from matching files
 
         #update leaderboards
-        leaderboard[username] = leaderboard.get(username, 0) + 1 #if doesn't exist, returns 0
+        leaderboard[username.lower()] = leaderboard.get(username.lower(), 0) + 1 #if doesn't exist, returns 0
         save_leaderboard(leaderboard_file)
 
         #get user's rank and count
         sorted_leaderboard = sorted(leaderboard.items(), key=lambda item: item[1], reverse=True)  #sort leaderboard
-        user_rank = next((rank + 1 for rank, (user, count) in enumerate(sorted_leaderboard) if user == username), None)  #find user's rank
-        user_count = leaderboard[username]  #get user's count
+        user_rank = next((rank + 1 for rank, (user, count) in enumerate(sorted_leaderboard) if user == username.lower()), None)  #find user's rank
+        user_count = leaderboard[username.lower()]  #get user's count
         rank_suffix = get_rank_suffix(user_rank) #get the appropriate suffix for the user's rank
 
         #display info
@@ -95,14 +94,16 @@ def load_leaderboard(file_path):
     if os.path.exists(file_path):
         with open(file_path, mode="r", encoding="utf-8") as f:
             for line in f:
-                username, count = line.strip().split('\t')
-                leaderboard[username] = int(count)
+                if len(line) > 1:
+                    username, count = line.strip().split(": ")
+                    leaderboard[username] = int(count)
 
 def save_leaderboard(file_path):
     with open(file_path, mode="w", encoding="utf-8") as f:
         sorted_leaderboard = sorted(leaderboard.items(), key=lambda item: item[1], reverse=True) #sort the leaderboard by count in descending order
         for username, count in sorted_leaderboard:
-            f.write(f"{username}\t{count}\n")
+            f.write(f"{username}: {count}\n")
+        f.write("\n")
 
 def get_rank_suffix(rank):
     if 10 <= rank % 100 <= 20:  #handle the special case for 11th, 12th, 13th
